@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EasyDine</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="./styles/main.css" />
+</head>
+
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo">
+        <i class="fa-solid logo-img fa-utensils"></i>
+        <h1>EasyDine</h1>
+      </div>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#">Home</a></li>
+          <li><a href="./pages/chat.html">Chat</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="content">
+    <section class="hero">
+      <h2>Discover & Dine Effortlessly 🍽️</h2>
+      <p>Explore restaurants, browse their menus, and book your reservations with ease.</p>
+    </section>
+
+    <div class="action-bar">
+      <h2>Restaurants</h2>
+      <button id="add-restaurant-btn">+ Add Restaurant</button>
+    </div>
+
+    <div id="restaurants" class="restaurants-grid">
+      <!-- Restaurants render here -->
+    </div>
+  </main>
+
+  <!-- Restaurant Creation Modal -->
+  <div id="restaurant-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Add New Restaurant</h3>
+      <form id="restaurant-form">
+        <label>Name</label>
+        <input type="text" id="resto-name" required placeholder="Restaurant Name" />
+
+        <label>Location</label>
+        <input type="text" id="resto-location" required placeholder="City or Address" />
+
+        <label>Cuisine Type</label>
+        <input type="text" id="resto-cuisine" required placeholder="e.g., Italian, Indian" />
+
+        <label>Rating</label>
+        <input type="number" step="0.1" min="0" max="5" id="resto-rating" placeholder="4.5" />
+
+        <div class="modal-actions">
+          <button type="submit">Save</button>
+          <button type="button" id="cancel-modal-btn" class="cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-content">
+      <div>© 2025 EasyDine. All rights reserved.</div>
+      <div class="footer-icons">
+        <i class="fa-brands fa-facebook-f"></i>
+        <i class="fa-brands fa-twitter"></i>
+        <i class="fa-brands fa-instagram"></i>
+        <i class="fa-brands fa-linkedin-in"></i>
+      </div>
+      <div>
+        <a href="#">Privacy Policy</a> • <a href="#">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Edit Restaurant Modal -->
+<div id="editModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <h2>Edit Restaurant</h2>
+    <form id="editForm">     
+      <label>Name</label>
+      <input type="text" id="edit-name" required />
+
+      <label>Location</label>
+      <input type="text" id="edit-location" required />
+
+      <label>Cuisine Type</label>
+      <input type="text" id="edit-cuisine" required />
+
+      <label>Rating</label>
+      <input type="number" id="edit-rating" step="0.1" min="0" max="5" />
+
+      <div class="modal-actions">
+        <button type="submit" class="save-btn">Save</button>
+        <button type="button" class="cancel-btn">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <script type="module" src="./scripts/main.js"></script>
+</body>
+
+</html>
