@@ -1,6 +1,9 @@
 // API Service configuration
 const API_CONFIG = {
-  baseURL: "http://127.0.0.1:8080/dev-ui/?app=agent&session=d8c39b8f-1cc9-440e-86ba-89dde2a94bf6&userId=user", // Configure the relavant backend url
+  // Use "" (an empty string) as the baseURL.
+  // This makes all requests "relative" to the current server.
+  // e.g., "/restaurants" will correctly go to "http://127.0.0.1:8080/restaurants"
+  baseURL: "", 
   headers: {
     "Content-Type": "application/json",
   },
@@ -8,15 +11,27 @@ const API_CONFIG = {
 
 // Utility function to handle API responses
 const handleResponse = async (response) => {
+  // Check for 204 No Content (for DELETE)
+  if (response.status === 204) {
+    return; // Return nothing, as there is no body
+  }
+  
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || `HTTP error! status: ${response.status}`);
   }
-  return response.json();
+  
+  // Only parse JSON if there's content
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") !== -1) {
+    return response.json();
+  }
+  return; 
 };
 
 // Utility function to build the full URL
 const buildURL = (endpoint) => {
+  // This will now correctly build URLs like "/restaurants"
   return `${API_CONFIG.baseURL}${endpoint}`;
 };
 
@@ -77,22 +92,6 @@ class ApiService {
     }
   }
 
-  // PATCH request
-  static async patch(endpoint, data = {}) {
-    try {
-      const response = await fetch(buildURL(endpoint), {
-        method: "PATCH",
-        headers: API_CONFIG.headers,
-        body: JSON.stringify(data),
-      });
-
-      return handleResponse(response);
-    } catch (error) {
-      console.error("PATCH Request Error:", error);
-      throw error;
-    }
-  }
-
   // DELETE request
   static async delete(endpoint) {
     try {
@@ -108,6 +107,8 @@ class ApiService {
     }
   }
 
+  // ... (rest of the file is unchanged) ...
+  
   // Method to update headers (e.g., adding authentication token)
   static setHeader(key, value) {
     API_CONFIG.headers[key] = value;
