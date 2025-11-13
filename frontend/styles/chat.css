@@ -1,6 +1,6 @@
 /* Chat page styles */
 
-body {
+body.chat-body { /* Apply to chat page body */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -10,10 +10,13 @@ body {
   flex: 1;
   gap: 0.5rem;
   overflow: hidden;
-  height: 100%;
+  height: calc(100vh - 66px); /* Full height minus header */
   width: 100%;
   padding: 1rem;
+  display: flex;
   flex-direction: row;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .sessions-container .session-title {
@@ -22,6 +25,7 @@ body {
 
 .sessions-container .create-session-button {
   all: unset;
+  box-sizing: border-box; /* Add this */
   color: var(--color-white);
   border-radius: 1.25rem;
   padding: 0.25rem;
@@ -48,26 +52,28 @@ body {
   gap: 1rem;
   align-items: center;
   transition: all 0.3s ease-in-out;
+}
 
-  span {
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
+.sessions-list .session-item span {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
 
-  .delete-session {
-    color: var(--color-muted-dark);
-  }
+.sessions-list .session-item .delete-session {
+  color: var(--color-muted-dark);
+  margin-left: auto; /* Push delete icon to the right */
 }
 
 .sessions-list .session-item:hover,
 .sessions-list .session-item.active {
   color: var(--color-white);
   background-color: var(--color-primary);
+}
 
-  .delete-session {
-    color: var(--color-white);
-  }
+.sessions-list .session-item:hover .delete-session,
+.sessions-list .session-item.active .delete-session {
+  color: var(--color-white);
 }
 
 .sessions-container {
@@ -89,6 +95,7 @@ body {
   display: flex;
   width: 100%;
   flex-direction: column;
+  flex-grow: 1; /* Allow chat container to fill space */
 }
 
 .messages {
@@ -109,10 +116,10 @@ body {
   line-height: 1.4;
   word-break: break-word;
   margin-bottom: 0.5rem;
+}
 
-  li {
-    margin-left: 1.5rem;
-  }
+.message li {
+  margin-left: 1.5rem;
 }
 
 .message.user {
@@ -124,15 +131,19 @@ body {
 
 .message.model {
   align-self: flex-start;
-  background: var(--color-assistant-bg);
+  background: var(--color-surface); /* Changed from assistant-bg for contrast */
   color: var(--color-text-strong);
   border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Add subtle shadow */
 }
 
 .message.function {
+  align-self: center; /* Center function calls/responses */
   color: var(--color-primary);
   font-weight: 600;
   border-radius: 1.5rem;
+  background: #e9f5f3;
+  font-size: 0.9rem;
 }
 
 .chat-form {
@@ -148,6 +159,11 @@ body {
   width: 100%;
   display: flex;
   gap: 0.75rem;
+  align-items: center; /* Align items vertically */
+  padding: 0.25rem; /* Add padding to the group */
+  border-radius: 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
 #message-input {
@@ -161,12 +177,7 @@ body {
   max-height: 120px;
   min-height: 40px;
   border-radius: 1.5rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-}
-
-#message-input:focus {
-  outline: none;
+  outline: none; /* Remove focus outline */
 }
 
 .attach-btn {
@@ -185,7 +196,7 @@ body {
 
 .attach-btn:hover {
   color: var(--color-primary);
-  background: var(--color-muted);
+  background: var(--color-muted-2);
 }
 
 #file-input {
@@ -204,6 +215,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 #send-btn:hover {
@@ -231,7 +243,7 @@ body {
 
 .preview-wrapper {
   position: relative;
-  margin-bottom: 0.5rem;
+  display: inline-block; /* Changed from margin-bottom */
 }
 
 .remove-preview {
@@ -261,11 +273,12 @@ body {
   padding: 0.5rem;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 0.5rem;
-
-  &:empty {
-    display: none;
-  }
 }
+
+.file-preview:empty {
+  display: none;
+}
+
 
 #send-btn:disabled {
   opacity: 0.6;
@@ -284,9 +297,24 @@ body {
   border: 1px solid var(--color-border-light);
 }
 
+@media (max-width: 768px) {
+  .chat-page {
+    flex-direction: column;
+    height: calc(100vh - 66px); /* Adjust for header */
+  }
+  .sessions-container {
+    max-width: 100%;
+    height: 250px; /* Give sessions a fixed height */
+    margin-bottom: 0.5rem;
+  }
+  .chat-container {
+    flex-grow: 1;
+  }
+}
+
 @media (max-width: 600px) {
   .messages {
-    height: 50vh;
+    /* Removed fixed height, let flex-grow handle it */
   }
 
   .message {

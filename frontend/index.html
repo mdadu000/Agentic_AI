@@ -6,21 +6,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>EasyDine</title>
 
- <!-- This matches your new 'styles' folder -->
-<link rel="stylesheet" href="/static/styles/main.css">
-<link rel="stylesheet" href="/static/styles/chat.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="./styles/main.css" />
 </head>
 
 <body>
   <header>
     <div class="header-container">
-      <div class="logo">
+      <a href="/" class="logo">
         <i class="fa-solid logo-img fa-utensils"></i>
         <h1>EasyDine</h1>
-      </div>
+      </a>
       <nav>
         <ul class="nav-links">
-          <li><a href="#">Home</a></li>
+          <li><a href="./index.html">Home</a></li>
           <li><a href="./pages/chat.html">Chat</a></li>
         </ul>
       </nav>
@@ -29,7 +28,7 @@
 
   <main class="content">
     <section class="hero">
-      <h2>Discover & Dine Effortlessly 🍽️</h2>
+      <h2>Discover & Dine Effortlessly 🍽</h2>
       <p>Explore restaurants, browse their menus, and book your reservations with ease.</p>
     </section>
 
@@ -39,11 +38,9 @@
     </div>
 
     <div id="restaurants" class="restaurants-grid">
-      <!-- Restaurants render here -->
-    </div>
+      </div>
   </main>
 
-  <!-- Restaurant Creation Modal -->
   <div id="restaurant-modal" class="modal hidden">
     <div class="modal-content">
       <h3>Add New Restaurant</h3>
@@ -83,32 +80,6 @@
     </div>
   </footer>
 
-  <!-- Edit Restaurant Modal -->
-<div id="editModal" class="modal-overlay" style="display:none;">
-  <div class="modal-content">
-    <h2>Edit Restaurant</h2>
-    <form id="editForm">     
-      <label>Name</label>
-      <input type="text" id="edit-name" required />
-
-      <label>Location</label>
-      <input type="text" id="edit-location" required />
-
-      <label>Cuisine Type</label>
-      <input type="text" id="edit-cuisine" required />
-
-      <label>Rating</label>
-      <input type="number" id="edit-rating" step="0.1" min="0" max="5" />
-
-      <div class="modal-actions">
-        <button type="submit" class="save-btn">Save</button>
-        <button type="button" class="cancel-btn">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-  <script type="module" src="./scripts/main.js"></script>
+ <script type="module" src="./scripts/main.js"></script>
 </body>
-
 </html>

@@ -8,7 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function initChat() {
   const newSessionButton = document.getElementById("new-session");
-  newSessionButton.addEventListener("click", createSession);
+  if (newSessionButton) {
+    newSessionButton.addEventListener("click", createSession);
+  }
   listSessions();
 }
 
@@ -18,17 +20,22 @@ const form = document.getElementById("chat-form");
 const input = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
 const fileInput = document.getElementById("file-input");
-const uploadList = document.getElementById("upload-list");
 const sessionsListWrapper = document.getElementById("sessions-list");
 
 function listSessions() {
+  if (!sessionsListWrapper) return; // Not on chat page
   ApiService.get(`/apps/${AgentName}/users/user/sessions`)
     .then((sessions) => {
-      if (sessions.length) {
+      if (sessions && sessions.length) {
         activeSessionId = sessions[0].id;
+        sessionsListWrapper.innerHTML = ""; // Clear list
         for (let i = 0; i < sessions.length; i++) {
           createSessionElement(sessions[i].id);
         }
+        // Automatically load the first session
+        updateActiveSession(activeSessionId);
+      } else {
+        createSession(); // If no sessions, create one
       }
     })
     .catch((error) => console.error(error));
@@ -38,25 +45,21 @@ function createSessionElement(id) {
   const li = document.createElement("li");
   li.setAttribute("id", `id-${id}`);
   li.setAttribute("class", "session-item");
+  
+  const spanEl = document.createElement("span");
+  spanEl.innerHTML = id;
+  li.appendChild(spanEl);
+  
   const deleteIcon = document.createElement("i");
   deleteIcon.setAttribute("class", "fa fa-trash delete-session");
   deleteIcon.onclick = (event) => deleteSession(event, id);
-  const spanEl = document.createElement("span");
-  spanEl.innerHTML = id;
-  if (activeSessionId === id) {
-    const existingSessions =
-      sessionsListWrapper.querySelectorAll(".session-item");
-    if (existingSessions.length) {
-      for (let j = 0; j < existingSessions.length; j++) {
-        existingSessions[j].classList.remove("active");
-      }
-    }
-    li.classList.add("active");
-    updateActiveSession(id);
-  }
-  li.onclick = () => updateActiveSession(id);
-  li.appendChild(spanEl);
   li.appendChild(deleteIcon);
+  
+  if (activeSessionId === id) {
+    li.classList.add("active");
+  }
+  
+  li.onclick = () => updateActiveSession(id);
   sessionsListWrapper.appendChild(li);
 }
 
@@ -64,7 +67,7 @@ function createSession() {
   ApiService.post(`/apps/${AgentName}/users/user/sessions`)
     .then((session) => {
       activeSessionId = session.id;
-      createSessionElement(session.id);
+      listSessions(); // Refresh the whole list to set active state
     })
     .catch((error) => console.error(error));
 }
@@ -75,12 +78,18 @@ function deleteSession(event, id) {
     .then(() => {
       const session = document.getElementById(`id-${id}`);
       const wasActive = session.classList.contains("active");
+      session.parentNode.removeChild(session);
+      
       if (wasActive) {
         const firstSession = document.querySelector(".session-item");
-        firstSession.classList.add("active");
-        activeSession = firstSession.getAttribute("id");
+        if (firstSession) {
+            firstSession.classList.add("active");
+            activeSessionId = firstSession.getAttribute("id").replace('id-','');
+            updateActiveSession(activeSessionId);
+        } else {
+            createSession(); // Create a new one if all are deleted
+        }
       }
-      session.parentNode.removeChild(session);
     })
     .catch((error) => console.error(error));
 }
@@ -96,8 +105,9 @@ function updateActiveSession(id) {
         }
       }
       const listEl = document.getElementById(`id-${id}`);
+      if (listEl) listEl.classList.add("active");
+      
       activeSessionId = id;
-      listEl.classList.add("active");
       messagesEl.innerHTML = "";
       renderEvents(sessionResponse.events);
     })
@@ -105,6 +115,7 @@ function updateActiveSession(id) {
 }
 
 function renderEvents(events) {
+  if (!events) return;
   for (let i = 0; i < events.length; i++) {
     if (events[i].content) {
       appendMessage(events[i].content, events[i].content.role);
@@ -124,7 +135,12 @@ function appendMessage(content, who = "model") {
       } else {
         el.className = `message ${who}`;
         if (part.text) {
-          el.innerHTML = marked.parse(part.text);
+          // Use marked.parse if marked is loaded
+          if (typeof marked !== 'undefined') {
+            el.innerHTML = marked.parse(part.text);
+          } else {
+            el.innerText = part.text;
+          }
         }
         if (part.functionCall) {
           el.classList.add("function");
@@ -147,19 +163,21 @@ function appendMessage(content, who = "model") {
 function createMediaElement({ data, mimeType, displayName }) {
   const wrapper = document.createElement("div");
   wrapper.className = "message-media";
+  // The backend ADK service uses URL-safe base64, so we must reverse it
   const encrpytedData = data.replace(/_/g, "/").replace(/-/g, "+");
+  
   if (mimeType.startsWith("image/")) {
     const img = document.createElement("img");
     img.src = `data:${mimeType};base64,${encrpytedData}`;
-    img.alt = displayName;
+    img.alt = displayName || "User upload";
     img.loading = "lazy";
     wrapper.appendChild(img);
   } else {
     // For non-image files, show a download link
     const link = document.createElement("a");
     link.href = `data:${mimeType};base64,${encrpytedData}`;
-    link.download = displayName;
-    link.innerHTML = `<i class="fa fa-download"></i> ${displayName}`;
+    link.download = displayName || "file";
+    link.innerHTML = `<i class="fa fa-download"></i> ${displayName || "Download File"}`;
     wrapper.appendChild(link);
   }
 
@@ -167,15 +185,13 @@ function createMediaElement({ data, mimeType, displayName }) {
 }
 
 function setSending(isSending) {
-  sendBtn.disabled = isSending;
-  input.disabled = isSending;
+  if (sendBtn) sendBtn.disabled = isSending;
+  if (input) input.disabled = isSending;
 }
 
 // File handling
 let currentFile = null;
-const filePreview = document.createElement("div");
-filePreview.className = "file-preview";
-form.insertBefore(filePreview, form.firstChild);
+const filePreview = document.getElementById("file-preview"); 
 
 async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -195,6 +211,7 @@ async function fileToBase64(file) {
 }
 
 function showFilePreview(file) {
+  if (!filePreview) return;
   filePreview.innerHTML = "";
   if (!file) return;
 
@@ -225,9 +242,9 @@ function showFilePreview(file) {
 }
 
 function clearFilePreview() {
-  filePreview.innerHTML = "";
+  if (filePreview) filePreview.innerHTML = "";
   currentFile = null;
-  fileInput.value = "";
+  if (fileInput) fileInput.value = "";
 }
 
 async function sendMessage(text, attachedFile = null) {
@@ -254,37 +271,48 @@ async function sendMessage(text, attachedFile = null) {
     newMessage: { role: "user", parts },
     sessionId: activeSessionId,
     stateDelta: null,
-    streaming: false,
+    streaming: true, // Set to true for streaming
     userId: "user",
   };
 
   try {
-    await ApiService.postWithStream("/run_sse", payload, async (chunk) => {
-      if (chunk && typeof chunk === "object") {
-        appendMessage(chunk.content, "model");
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+    await ApiService.postWithStream(
+      "/run_sse", // Use the streaming endpoint
+      payload, 
+      async (chunk) => {
+        if (chunk && typeof chunk === "object" && chunk.content) {
+            appendMessage(chunk.content, "model");
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        } else if (chunk && chunk.sessionId) {
+            activeSessionId = chunk.sessionId;
+        }
       }
-    });
+    );
   } catch (err) {
     console.error("Chat error:", err);
+    appendMessage({ parts: [{ text: `**Error:** ${err.message || "Could not connect to agent."}` }] }, "model");
   } finally {
     setSending(false);
   }
 }
 
 // File input handler
-fileInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    currentFile = file;
-    showFilePreview(file);
-  }
-});
+if (fileInput) {
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      currentFile = file;
+      showFilePreview(file);
+    }
+  });
+}
 
 // Form submit
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const text = input.value.trim();
-  input.value = "";
-  await sendMessage(text, currentFile);
-});
+if (form) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    input.value = "";
+    await sendMessage(text, currentFile);
+  });
+}

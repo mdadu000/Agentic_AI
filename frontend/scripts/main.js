@@ -1,139 +1,105 @@
 import ApiService from "../services/apiService.js";
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const restaurantContainer = document.getElementById("restaurants");
-  const restoForm = document.getElementById("restaurant-form");
-  const addRestoBtn = document.getElementById("add-restaurant-btn");
-  const restoModal = document.getElementById("restaurant-modal");
-  const cancelModalBtn = document.getElementById("cancel-modal-btn");
+document.addEventListener("DOMContentLoaded", () => {
+    loadRestaurants();
+    
+    // Modal controls
+    const addBtn = document.getElementById("add-restaurant-btn");
+    const modal = document.getElementById("restaurant-modal");
+    const cancelBtn = document.getElementById("cancel-modal-btn");
+    const form = document.getElementById("restaurant-form");
 
-  let restaurants = [];
+    if (addBtn) addBtn.addEventListener("click", () => modal.classList.remove("hidden"));
+    if (cancelBtn) cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
+    if (form) form.addEventListener("submit", handleAddRestaurant);
+});
 
-  async function loadRestaurants() {
-    restaurants = await ApiService.get("/restaurants");
-    renderRestaurants(restaurants);
-  }
-  loadRestaurants();
+/**
+ * Fetches restaurants from the API and renders them.
+ * This assumes your backend has a RESTful endpoint at /restaurants/
+ */
+async function loadRestaurants() {
+    const grid = document.getElementById("restaurants");
+    if (!grid) return; // Not on the homepage
 
-  function renderRestaurants(data) {
-    restaurantContainer.innerHTML = "";
+    grid.innerHTML = ""; // Clear existing
 
-    data.forEach((r, index) => {
-      const card = document.createElement("div");
-      card.className = "restaurant-card";
+    try {
+        // We use the raw endpoint, not the agent tool, for a direct UI feed
+        const data = await ApiService.get("/restaurants/");
+        
+        if (!data || data.length === 0) {
+            grid.innerHTML = "<p>No restaurants found. Add one!</p>";
+            return;
+        }
 
-      card.innerHTML = `
+        data.forEach(restaurant => {
+            const card = createRestaurantCard(restaurant);
+            grid.appendChild(card);
+        });
+    } catch (error) {
+        console.error("Failed to load restaurants:", error);
+        grid.innerHTML = `<p>Error loading restaurants: ${error.message}</p>`;
+    }
+}
+
+/**
+ * Creates a DOM element for a single restaurant.
+ */
+function createRestaurantCard(restaurant) {
+    const card = document.createElement("div");
+    card.className = "restaurant-card";
+    
+    const ratingHTML = restaurant.rating
+        ? `<div class="restaurant-rating">
+             <i class="fa-solid fa-star"></i> ${restaurant.rating.toFixed(1)}
+           </div>`
+        : '';
+
+    card.innerHTML = `
         <div class="restaurant-header">
-          <h3 class="restaurant-name">
-            <i class="fa-solid fa-store"></i> ${r.name}
-          </h3>
-          <div class="restaurant-rating">
-            <i class="fa-solid fa-star" style="color:#f7b500;"></i> 
-            ${r.rating ?? "N/A"}
-          </div>
+            <h3 class="restaurant-name">${restaurant.name}</h3>
+            ${ratingHTML}
         </div>
         <div class="restaurant-details">
-          <p class="restaurant-info">
-            <i class="fa-solid fa-utensils"></i> ${r.cuisine_type || "Cuisine not listed"}
-          </p>
-          <p class="restaurant-info">
-            <i class="fa-solid fa-map-marker-alt"></i> ${r.location || "Location unavailable"}
-          </p>
+            <p class="restaurant-info">
+                <i class="fa-solid fa-map-pin"></i>
+                <span>${restaurant.location}</span>
+            </p>
+            <p class="restaurant-info">
+                <i class="fa-solid fa-bowl-food"></i>
+                <span>${restaurant.cuisine_type}</span>
+            </p>
         </div>
-        <div class="restaurant-actions">
-          <button class="edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
-          <button class="delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
-        </div>
-      `;
+    `;
+    return card;
+}
 
-      // --- Edit Button Logic ---
-      const editBtn = card.querySelector(".edit-btn");
-      editBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openEditModal(r, data, index);
-      });
-
-      // --- Delete Button Logic ---
-      const deleteBtn = card.querySelector(".delete-btn");
-      deleteBtn.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        try {
-          await ApiService.delete(`/restaurants/${r.id}`);
-          data.splice(index, 1);
-          renderRestaurants(data);
-        } catch (error) {
-          console.error("Error deleting restaurant:", error);
-          alert("Failed to delete restaurant. Please try again.");
-        }
-      });
-
-      restaurantContainer.appendChild(card);
-    });
-  }
-
-  function openEditModal(restaurant, data, index) {
-    const modal = document.getElementById("editModal");
-    const form = document.getElementById("editForm");
-
-    // Prefill values
-    document.getElementById("edit-name").value = restaurant.name;
-    document.getElementById("edit-location").value = restaurant.location;
-    document.getElementById("edit-cuisine").value = restaurant.cuisine_type;
-    document.getElementById("edit-rating").value = restaurant.rating ?? "";
-
-    modal.style.display = "flex";
-
-    // Cancel button closes modal
-    form.querySelector(".cancel-btn").onclick = () => {
-      modal.style.display = "none";
+/**
+ * Handles the "Add Restaurant" form submission.
+ */
+async function handleAddRestaurant(event) {
+    event.preventDefault();
+    const form = event.target;
+    
+    const newRestaurant = {
+        // ID should be set by the backend
+        name: document.getElementById("resto-name").value,
+        location: document.getElementById("resto-location").value,
+        cuisine_type: document.getElementById("resto-cuisine").value,
+        rating: parseFloat(document.getElementById("resto-rating").value) || null
     };
 
-    // Submit logic
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-
-      const updated = {
-        id: restaurant.id,
-        name: document.getElementById("edit-name").value.trim(),
-        location: document.getElementById("edit-location").value.trim(),
-        cuisine_type: document.getElementById("edit-cuisine").value.trim(),
-        rating: parseFloat(document.getElementById("edit-rating").value) || null,
-      };
-
-      try {
-        await ApiService.put(`/restaurants/${updated.id}`, updated);
-        data[index] = updated;
-        renderRestaurants(data);
-        modal.style.display = "none";
-      } catch (err) {
-        console.error("Error updating restaurant:", err);
-        alert("Failed to update restaurant.");
-      }
-    };
-  }
-
-  addRestoBtn.addEventListener("click", () => {
-    restoModal.classList.remove("hidden");
-  });
-
-  cancelModalBtn.addEventListener("click", () => {
-    restoModal.classList.add("hidden");
-  });
-
-  restoForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const newResto = {
-      id: new Date().getTime().toString(),
-      name: document.getElementById("resto-name").value.trim(),
-      location: document.getElementById("resto-location").value.trim(),
-      cuisine_type: document.getElementById("resto-cuisine").value.trim(),
-      rating: parseFloat(document.getElementById("resto-rating").value) || 0,
-    };
-
-    await ApiService.post("/restaurants", newResto);
-    restoModal.classList.add("hidden");
-    restoForm.reset();
-    await loadRestaurants();
-  });
-});
+    try {
+        // We call the direct API endpoint for creating a restaurant
+        await ApiService.post("/restaurants/", newRestaurant);
+        
+        // Success
+        form.reset();
+        document.getElementById("restaurant-modal").classList.add("hidden");
+        loadRestaurants(); // Refresh the list
+    } catch (error) {
+        console.error("Failed to add restaurant:", error);
+        alert(`Error: ${error.message}`);
+    }
+}

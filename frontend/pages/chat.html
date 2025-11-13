@@ -4,20 +4,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Chat — Web App</title>
+  <title>Chat — EasyDine</title>
   <link rel="stylesheet" href="../styles/main.css" />
   <link rel="stylesheet" href="../styles/chat.css" />
-  <!-- Font Awesome (CDN) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 
 <body>
   <header>
     <div class="header-container">
-      <div class="logo">
+      <a href="../index.html" class="logo">
         <i class="fa-solid logo-img fa-utensils"></i>
         <h1>EasyDine</h1>
-      </div>
+      </a>
       <nav>
         <ul class="nav-links">
           <li><a href="../index.html">Home</a></li>
@@ -38,10 +37,6 @@
     <section class="chat-container" aria-label="Chat">
       <div id="messages" class="messages" role="log" aria-live="polite"></div>
 
-      <!-- <div id="file-drop" class="file-drop">
-          Drop files here or click to attach
-        </div> -->
-
       <form id="chat-form" class="chat-form" autocomplete="off">
         <div id="file-preview" class="file-preview"></div>
         <div class="input-group">
@@ -49,7 +44,7 @@
             <i class="fa fa-paperclip"></i>
           </label>
           <input id="file-input" type="file" name="file" aria-label="Attach file" hidden />
-          <textarea id="message-input" placeholder="Type your message..." rows="1"></textarea>
+          <textarea id="message-input" placeholder="Type your message or upload an image..." rows="1"></textarea>
           <button id="send-btn" type="submit">
             <i class="fa fa-paper-plane"></i>
           </button>

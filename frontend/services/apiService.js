@@ -1,6 +1,9 @@
 // API Service configuration
 const API_CONFIG = {
-  baseURL: "http://127.0.0.1:8080/dev-ui/?app=agent&session=d8c39b8f-1cc9-440e-86ba-89dde2a94bf6&userId=user", // Configure the relavant backend url
+  // This is the URL from your provided file.
+  // For production, you might want to use a relative path like "/api"
+  // to work with a proxy.
+  baseURL: "https://8080-kode-ws-482b31a9f.hebbale.academy",
   headers: {
     "Content-Type": "application/json",
   },
@@ -10,14 +13,19 @@ const API_CONFIG = {
 const handleResponse = async (response) => {
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    // Use "detail" if available (FastAPI standard), otherwise "message"
+    throw new Error(error.detail || error.message || `HTTP error! status: ${response.status}`);
   }
   return response.json();
 };
 
 // Utility function to build the full URL
 const buildURL = (endpoint) => {
-  return `${API_CONFIG.baseURL}${endpoint}`;
+  // Ensure no double slashes
+  if (endpoint.startsWith('/')) {
+    endpoint = endpoint.substring(1);
+  }
+  return `${API_CONFIG.baseURL}/${endpoint}`;
 };
 
 // Export buildURL and API_CONFIG so other scripts (e.g., file upload) can use the base URL
@@ -135,7 +143,9 @@ class ApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+         const errorText = await response.text();
+         console.error("Streaming error response:", errorText);
+         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       if (!response.body) {
@@ -153,12 +163,12 @@ class ApiService {
 
         if (done) {
           // Process any remaining data in the buffer
-          if (buffer && onChunk) {
+          if (buffer.startsWith("data: ") && onChunk) {
             try {
-              const jsonData = JSON.parse(buffer);
+              const jsonData = JSON.parse(buffer.substring(6));
               await onChunk(jsonData);
             } catch (e) {
-              console.warn("Error parsing final chunk:", e);
+              console.warn("Error parsing final chunk:", e, buffer);
             }
           }
           break;
@@ -167,21 +177,20 @@ class ApiService {
         // Decode the chunk and add to buffer
         buffer += decoder.decode(value, { stream: true });
 
-        // Process complete JSON objects from the buffer
-        while (true) {
-          const newlineIndex = buffer.indexOf("\n");
-          if (newlineIndex === -1) break;
-
-          const chunk = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
-
-          if (chunk.trim() && onChunk) {
+        // Process complete SSE messages from the buffer
+        // An SSE message ends with \n\n
+        let boundary = buffer.indexOf("\n\n");
+        while (boundary !== -1) {
+          const chunk = buffer.slice(0, boundary);
+          buffer = buffer.slice(boundary + 2); // Skip the \n\n
+          
+          if (chunk.startsWith("data: ") && onChunk) {
             try {
-              const data = chunk.slice(6);
+              const data = chunk.slice(6); // Remove "data: "
               const jsonData = JSON.parse(data);
               await onChunk(jsonData);
             } catch (e) {
-              console.warn("Error parsing chunk:", e);
+              console.warn("Error parsing SSE chunk:", e, data);
             }
           }
         }
