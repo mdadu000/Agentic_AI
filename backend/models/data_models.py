@@ -10,36 +10,37 @@ class Restaurant(BaseModel):
     name: str
     location: str
     cuisine_type: str
-    rating: Optional[float] = None  # Rating is optional and can be a float
+    rating: Optional[float] = None
+    created_at: Optional[datetime] = None # For "most recent"
 
 # MenuItem Model
 class MenuItem(BaseModel):
     model_config = ConfigDict(
         json_encoders={datetime: lambda dt: dt.isoformat()})
     id: str
-    restaurant_id: str  # Foreign Key to the Restaurant
+    restaurant_id: str
     name: str
     description: Optional[str] = None
     price: float
-
+    category: Optional[str] = None # For analytics
+    
 # Reservation Model
 class Reservation(BaseModel):
     model_config = ConfigDict(
         json_encoders={datetime: lambda dt: dt.isoformat()})
     id: str
-    restaurant_id: str  # Foreign Key to the Restaurant
+    restaurant_id: str
     user_id: str
     reservation_time: datetime
     guests: int
 
-# List Models for API responses
-class RestaurantListResponse(BaseModel):
-    data: List[Restaurant]
-
-
-class MenuItemListResponse(BaseModel):
-    data: List[MenuItem]
-
-
-class ReservationListResponse(BaseModel):
-    data: List[Reservation]
+# Review Model
+class Review(BaseModel):
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda dt: dt.isoformat()})
+    id: str
+    restaurant_id: str
+    user_id: str
+    rating: float
+    comment: Optional[str] = None
+    timestamp: datetime
