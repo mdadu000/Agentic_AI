@@ -3,7 +3,6 @@ import ApiService from "../services/apiService.js";
 document.addEventListener("DOMContentLoaded", () => {
     loadRestaurants();
     
-    // Modal controls
     const addBtn = document.getElementById("add-restaurant-btn");
     const modal = document.getElementById("restaurant-modal");
     const cancelBtn = document.getElementById("cancel-modal-btn");
@@ -14,24 +13,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (form) form.addEventListener("submit", handleAddRestaurant);
 });
 
-/**
- * Fetches restaurants from the API and renders them.
- * This assumes your backend has a RESTful endpoint at /restaurants/
- */
 async function loadRestaurants() {
     const grid = document.getElementById("restaurants");
-    if (!grid) return; // Not on the homepage
+    if (!grid) return; 
 
-    grid.innerHTML = ""; // Clear existing
+    grid.innerHTML = "<p>Loading...</p>";
 
     try {
-        // We use the raw endpoint, not the agent tool, for a direct UI feed
         const data = await ApiService.get("/restaurants/");
+        grid.innerHTML = ""; 
         
         if (!data || data.length === 0) {
             grid.innerHTML = "<p>No restaurants found. Add one!</p>";
             return;
         }
+
+        // Sort by created_at descending if available, otherwise just show
+        data.reverse(); 
 
         data.forEach(restaurant => {
             const card = createRestaurantCard(restaurant);
@@ -43,9 +41,6 @@ async function loadRestaurants() {
     }
 }
 
-/**
- * Creates a DOM element for a single restaurant.
- */
 function createRestaurantCard(restaurant) {
     const card = document.createElement("div");
     card.className = "restaurant-card";
@@ -75,15 +70,12 @@ function createRestaurantCard(restaurant) {
     return card;
 }
 
-/**
- * Handles the "Add Restaurant" form submission.
- */
 async function handleAddRestaurant(event) {
-    event.preventDefault();
-    const form = event.target;
+    event.preventDefault(); // Prevents page reload on submit
     
+    // Gather data from form
+    // Note: We do NOT send 'id', the backend will generate it.
     const newRestaurant = {
-        // ID should be set by the backend
         name: document.getElementById("resto-name").value,
         location: document.getElementById("resto-location").value,
         cuisine_type: document.getElementById("resto-cuisine").value,
@@ -91,15 +83,14 @@ async function handleAddRestaurant(event) {
     };
 
     try {
-        // We call the direct API endpoint for creating a restaurant
         await ApiService.post("/restaurants/", newRestaurant);
-        
-        // Success
-        form.reset();
+        alert("Restaurant added successfully!");
+        document.getElementById("restaurant-form").reset();
         document.getElementById("restaurant-modal").classList.add("hidden");
-        loadRestaurants(); // Refresh the list
+        loadRestaurants(); // Reload the list immediately
     } catch (error) {
         console.error("Failed to add restaurant:", error);
+        // Now this will show the specific error (e.g., "Field X is required")
         alert(`Error: ${error.message}`);
     }
 }
