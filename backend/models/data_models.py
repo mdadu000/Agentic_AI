@@ -6,12 +6,14 @@ from datetime import datetime
 class Restaurant(BaseModel):
     model_config = ConfigDict(
         json_encoders={datetime: lambda dt: dt.isoformat()})
-    id: str
+    
+    # FIX: ID is now Optional. The Service will generate it.
+    id: Optional[str] = None
     name: str
     location: str
     cuisine_type: str
     rating: Optional[float] = None
-    created_at: Optional[datetime] = None # For "most recent"
+    created_at: Optional[datetime] = None
 
 # MenuItem Model
 class MenuItem(BaseModel):
@@ -22,7 +24,7 @@ class MenuItem(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
-    category: Optional[str] = None # For analytics
+    category: Optional[str] = None 
     
 # Reservation Model
 class Reservation(BaseModel):
