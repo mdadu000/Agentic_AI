@@ -7,6 +7,10 @@ let activeSessionId = "";
 window.LAST_MESSAGE_HASH = "";
 window.LAST_MESSAGE_TIME = 0;
 
+// --- VOICE SPEECH RECOGNITION ---
+let recognition = null;
+let isListening = false;
+
 document.addEventListener("DOMContentLoaded", () => {
     initChat();
 });
@@ -38,7 +42,87 @@ function initChat() {
         newInput.onchange = handleFileChange;
     }
 
+    // 4. INIT VOICE RECOGNITION
+    initVoiceRecognition();
+
+    // 5. BIND ENTER KEY PRESS ON TEXTAREA TO SUBMIT FORM
+    const msgInput = document.getElementById("message-input");
+    if (msgInput) {
+        msgInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleFormSubmit(e);
+            }
+        });
+    }
+
     listSessions();
+}
+
+function initVoiceRecognition() {
+    const micBtn = document.getElementById("mic-btn");
+    const statusBadge = document.getElementById("voice-status");
+    const inputField = document.getElementById("message-input");
+
+    if (!micBtn) return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        micBtn.title = "Voice recognition not supported in this browser";
+        micBtn.style.opacity = "0.4";
+        micBtn.onclick = () => alert("Web Speech Recognition API is not supported in this browser. Please use Chrome, Edge, or Safari.");
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+        isListening = true;
+        micBtn.classList.add("recording");
+        if (statusBadge) statusBadge.classList.remove("hidden");
+    };
+
+    recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        if (inputField) {
+            inputField.value = transcript;
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.warn("Speech recognition error:", event.error);
+        stopVoiceRecognition();
+    };
+
+    recognition.onend = () => {
+        stopVoiceRecognition();
+    };
+
+    micBtn.onclick = () => {
+        if (isListening) {
+            recognition.stop();
+        } else {
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error("Speech start error:", e);
+            }
+        }
+    };
+}
+
+function stopVoiceRecognition() {
+    isListening = false;
+    const micBtn = document.getElementById("mic-btn");
+    const statusBadge = document.getElementById("voice-status");
+    if (micBtn) micBtn.classList.remove("recording");
+    if (statusBadge) statusBadge.classList.add("hidden");
 }
 
 // --- HANDLERS ---
@@ -56,6 +140,9 @@ async function handleFormSubmit(e) {
     const currentFile = fileInput ? fileInput.files[0] : null;
 
     if (!text && !currentFile) return;
+
+    // Stop voice if listening
+    if (isListening && recognition) recognition.stop();
 
     // --- NETWORK DEBOUNCER ---
     const currentHash = `${text}-${currentFile ? currentFile.name : 'nofile'}-${activeSessionId}`;
@@ -97,9 +184,31 @@ function handleFileChange(e) {
 // --- CORE MESSAGING ---
 
 async function sendMessage(text, attachedFile = null) {
-    const parts = [];
-    if (text) parts.push({ text });
+    let fullText = text;
+
     if (attachedFile) {
+        if (attachedFile.type.startsWith("image/")) {
+            fullText += `\n[Attached Image: ${attachedFile.name}]`;
+        } else if (
+            attachedFile.type.startsWith("text/") || 
+            attachedFile.name.endsWith(".json") || 
+            attachedFile.name.endsWith(".csv") || 
+            attachedFile.name.endsWith(".txt") ||
+            attachedFile.name.endsWith(".pdf")
+        ) {
+            try {
+                const fileText = await attachedFile.text();
+                fullText += `\n\n--- Attached Document (${attachedFile.name}) ---\n${fileText.substring(0, 2500)}`;
+            } catch (e) {
+                fullText += `\n[Attached File: ${attachedFile.name}]`;
+            }
+        }
+    }
+
+    const parts = [];
+    if (fullText) parts.push({ text: fullText });
+
+    if (attachedFile && attachedFile.type.startsWith("image/")) {
         const base64Data = await fileToBase64(attachedFile);
         parts.push({ inlineData: base64Data });
     }
@@ -158,32 +267,20 @@ async function sendMessage(text, attachedFile = null) {
                         
                         // CASE A: Tool Call (Function)
                         if (part.functionCall || part.functionResponse) {
-                            // Strict check to ensure we don't double print tool calls
                             if (!isLastElementDuplicateTool(part)) {
                                 appendMessage(chunk.content, "model");
                             }
-                            // Reset text stream state because a tool interrupted it
                             currentBubble = null; 
                             accumulatedText = ""; 
                         }
                         // CASE B: Text Streaming
                         else if (part.text) {
                             if (!currentBubble) {
-                                // 🛑 CORE FIX: Before creating a new bubble, check if the LAST message
-                                // in the chat is identical to what we are about to start writing.
-                                // If the server sends the welcome message again, this stops it.
                                 const lastMsg = getLastModelMessageText();
-                                
-                                // Normalize text (trim whitespace) for comparison
                                 const cleanNewText = part.text.trim();
                                 const cleanLastText = lastMsg.trim();
 
-                                // If the new chunk is the START of a sentence that effectively duplicates
-                                // the previous message, we might be receiving a duplicate stream.
-                                // However, simple equality check is safer for "exact repetition".
                                 if (cleanLastText.length > 0 && cleanLastText === cleanNewText) {
-                                    // It's a duplicate! Don't create a bubble.
-                                    // Just skip this chunk.
                                     continue;
                                 }
 
@@ -213,7 +310,6 @@ async function sendMessage(text, attachedFile = null) {
 
 // --- UI HELPERS & DEDUPLICATION LOGIC ---
 
-// Helper to get text content of the very last model message
 function getLastModelMessageText() {
     const messagesEl = document.getElementById("messages");
     if (!messagesEl) return "";
@@ -225,7 +321,6 @@ function getLastModelMessageText() {
     return "";
 }
 
-// Helper to check for duplicate tool calls
 function isLastElementDuplicateTool(newPart) {
     const messagesEl = document.getElementById("messages");
     if (!messagesEl || !messagesEl.lastElementChild) return false;
@@ -255,21 +350,15 @@ function appendMessage(content, who) {
     const messagesEl = document.getElementById("messages");
     if (!messagesEl) return null;
 
-    // 🛑 FINAL DEFENSE: FULL DUPLICATE CHECK
-    // If we are about to add a completed message that is EXACTLY the same as the previous one, STOP.
     if (who === 'model') {
         const lastMsg = messagesEl.lastElementChild;
         if (lastMsg && lastMsg.classList.contains('model')) {
-            // Reconstruct text from content parts
             let newText = "";
             if (content.parts) {
                 content.parts.forEach(p => { if(p.text) newText += p.text; });
             }
             
-            // If the last message text contains the new text (or is identical), ignore.
-            // (Using strict equality is safest to avoid blocking intentional repetition)
             if (newText.trim().length > 0 && lastMsg.innerText.trim() === newText.trim()) {
-                console.log("Blocking exact duplicate message.");
                 return null;
             }
         }
@@ -284,11 +373,11 @@ function appendMessage(content, who) {
         for (const part of content.parts) {
             if (part.functionResponse) {
                 el.className = `message model function`;
-                el.innerHTML = `<i class="fa fa-check"></i> ${part.functionResponse.name}`;
+                el.innerHTML = `<i class="fa fa-check"></i> Executed: ${part.functionResponse.name}`;
                 hasContent = true;
             } else if (part.functionCall) {
                 el.className = `message model function`;
-                el.innerHTML = `<i class="fa fa-bolt"></i> ${part.functionCall.name}`;
+                el.innerHTML = `<i class="fa fa-bolt"></i> Tool: ${part.functionCall.name}`;
                 hasContent = true;
             } else if (part.text) {
                 if (typeof marked !== 'undefined') {
@@ -320,9 +409,11 @@ function createMediaElement({ data, mimeType }) {
     if (mimeType.startsWith("image/")) {
         const img = document.createElement("img");
         img.src = `data:${mimeType};base64,${encrpytedData}`;
+        img.style.maxWidth = "220px";
+        img.style.borderRadius = "8px";
         wrapper.appendChild(img);
     } else {
-        wrapper.innerHTML = `<i class="fa fa-file"></i> File attached`;
+        wrapper.innerHTML = `<i class="fa fa-file"></i> Document Attached`;
     }
     return wrapper;
 }
@@ -342,7 +433,16 @@ async function fileToBase64(file) {
 
 function showFilePreview(file) {
     const preview = document.getElementById("file-preview");
-    if (preview) preview.innerHTML = `<div class="preview-wrapper"><i class="fa fa-file"></i> ${file.name}</div>`;
+    const icon = file.type.startsWith("image/") ? "fa-image" : "fa-file-lines";
+    if (preview) {
+        preview.innerHTML = `
+            <div class="preview-wrapper">
+                <i class="fa-solid ${icon}"></i> 
+                <span>${file.name}</span>
+                <button type="button" class="btn-clear-file" onclick="document.getElementById('file-input').value=''; document.getElementById('file-preview').innerHTML='';">&times;</button>
+            </div>
+        `;
+    }
 }
 
 // --- SESSION MANAGEMENT ---
@@ -369,7 +469,7 @@ function createSessionElement(id) {
     const li = document.createElement("li");
     li.id = `id-${id}`;
     li.className = "session-item";
-    li.innerHTML = `<span>${id}</span> <i class="fa fa-trash delete-session"></i>`;
+    li.innerHTML = `<span>Session ${id.substring(0, 8)}...</span> <i class="fa fa-trash delete-session"></i>`;
     li.onclick = () => updateActiveSession(id);
     li.querySelector(".delete-session").onclick = (e) => deleteSession(e, id);
     listEl.appendChild(li);
@@ -403,10 +503,8 @@ function updateActiveSession(id) {
     const messagesEl = document.getElementById("messages");
     if (messagesEl) messagesEl.innerHTML = "";
     
-    // Clear hash to allow fresh loading
     window.LAST_MESSAGE_HASH = "";
 
-    // Load history
     ApiService.get(`/apps/${AgentName}/users/user/sessions/${id}`)
         .then(res => {
             if (res.events) res.events.forEach(e => appendMessage(e.content, e.content.role));

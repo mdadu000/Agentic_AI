@@ -1,7 +1,7 @@
 # Agent details
 AGENT_NAME = "agent"
 AGENT_DESCRIPTION = "Agent that helps users discover restaurants, view menus, manage reservations, and take advantage of available discounts"
-AGENT_MODEL = "gemini-2.0-flash"  # <-- REVERTED to the model your environment supports. This fixes the 404 error.
+AGENT_MODEL = "llama-3.3-70b-versatile"  # Groq high-performance model with function calling
 
 # DB Details
 DB_NAME = "restaurant.db"

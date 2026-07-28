@@ -76,6 +76,14 @@ class Service:
         end_of_day = datetime.combine(today, datetime.max.time()).isoformat()
         return await self.repo.list_reservations_today(start_of_day, end_of_day)
 
+    async def get_all_reservations(self) -> List[Dict]:
+        await self.repo.init_db()
+        return await self.repo.list_all_reservations()
+
+    async def delete_reservation(self, reservation_id: str) -> bool:
+        await self.repo.init_db()
+        return await self.repo.remove_reservation(reservation_id)
+
     async def get_highest_rated_restaurant(self) -> Optional[Restaurant]:
         await self.repo.init_db()
         avg_ratings = await self.repo.get_avg_ratings_by_restaurant()

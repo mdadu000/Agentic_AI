@@ -3,83 +3,422 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EasyDine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EasyDine — Discover, Reserve & Dine with AI</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="./styles/main.css" />
 </head>
 
-<body>
-  <header>
-    <div class="header-container">
-      <a href="/" class="logo">
-        <i class="fa-solid logo-img fa-utensils"></i>
+<body class="dashboard-body">
+
+  <!-- ==================== 1. LANDING & LOGIN ENTRANCE GATE ==================== -->
+  <div id="landing-gate-section" class="landing-gate-container">
+    <div class="landing-hero-content">
+      <div class="landing-brand">
+        <div class="logo-icon-wrapper large-logo">
+          <i class="fa-solid fa-utensils logo-img"></i>
+        </div>
         <h1>EasyDine</h1>
-      </a>
-      <nav>
-        <ul class="nav-links">
-          <li><a href="./index.html">Home</a></li>
-          <li><a href="./pages/chat.html">Chat</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-
-  <main class="content">
-    <section class="hero">
-      <h2>Discover & Dine Effortlessly 🍽</h2>
-      <p>Explore restaurants, browse their menus, and book your reservations with ease.</p>
-    </section>
-
-    <div class="action-bar">
-      <h2>Restaurants</h2>
-      <button id="add-restaurant-btn">+ Add Restaurant</button>
-    </div>
-
-    <div id="restaurants" class="restaurants-grid">
+        <p class="landing-tagline">AI-POWERED DINING & RESTAURANT MANAGEMENT PLATFORM</p>
       </div>
-  </main>
 
-  <div id="restaurant-modal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Add New Restaurant</h3>
-      <form id="restaurant-form">
-        <label>Name</label>
-        <input type="text" id="resto-name" required placeholder="Restaurant Name" />
+      <div class="landing-intro">
+        <h2>Discover Top Restaurants & Book Tables Effortlessly</h2>
+        <p>Sign in to your account to explore curated culinary venues, check live table reservations, view dish menus, and interact with your personal Groq Multimodal AI assistant.</p>
+        
+        <div class="quick-demo-buttons">
+          <button type="button" id="quick-demo-user-btn" class="btn-primary">
+            <i class="fa-solid fa-user"></i> Quick Login as Demo User
+          </button>
+          <button type="button" id="quick-demo-admin-btn" class="btn-secondary">
+            <i class="fa-solid fa-user-shield"></i> Quick Login as Demo Admin
+          </button>
+        </div>
+      </div>
+    </div>
 
-        <label>Location</label>
-        <input type="text" id="resto-location" required placeholder="City or Address" />
+    <!-- Embedded Auth Card -->
+    <div class="landing-auth-card">
+      <div class="auth-tabs">
+        <button type="button" id="gate-tab-login" class="auth-tab active">Log In</button>
+        <button type="button" id="gate-tab-signup" class="auth-tab">Register</button>
+      </div>
 
-        <label>Cuisine Type</label>
-        <input type="text" id="resto-cuisine" required placeholder="e.g., Italian, Indian" />
-
-        <label>Rating</label>
-        <input type="number" step="0.1" min="0" max="5" id="resto-rating" placeholder="4.5" />
-
+      <!-- Login Form -->
+      <form id="gate-login-form">
+        <div class="form-group">
+          <label for="gate-login-email">Email Address</label>
+          <input type="email" id="gate-login-email" required placeholder="user@easydine.com or admin@easydine.com" />
+        </div>
+        <div class="form-group">
+          <label for="gate-login-password">Password</label>
+          <input type="password" id="gate-login-password" required placeholder="Enter password (e.g. user123 / admin123)" />
+        </div>
+        <div class="demo-credentials-box">
+          <div class="cred-title"><i class="fa-solid fa-key"></i> Demo Credentials:</div>
+          <div class="cred-row">
+            <span class="cred-label">Admin:</span> <code>admin@easydine.com</code> / <code>admin123</code>
+          </div>
+          <div class="cred-row">
+            <span class="cred-label">User:</span> <code>user@easydine.com</code> / <code>user123</code>
+          </div>
+        </div>
         <div class="modal-actions">
-          <button type="submit">Save</button>
-          <button type="button" id="cancel-modal-btn" class="cancel">Cancel</button>
+          <button type="submit" class="btn-primary w-100">Sign In to EasyDine</button>
+        </div>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="gate-signup-form" class="hidden">
+        <div class="form-group">
+          <label for="gate-signup-name">Full Name</label>
+          <input type="text" id="gate-signup-name" required placeholder="John Doe" />
+        </div>
+        <div class="form-group">
+          <label for="gate-signup-email">Email Address</label>
+          <input type="email" id="gate-signup-email" required placeholder="your.email@domain.com" />
+        </div>
+        <div class="form-group">
+          <label for="gate-signup-password">Password</label>
+          <input type="password" id="gate-signup-password" required placeholder="Choose password" />
+        </div>
+        <div class="form-group">
+          <label for="gate-signup-role">Account Type</label>
+          <select id="gate-signup-role" class="form-select">
+            <option value="user">User (Customer & Diner)</option>
+            <option value="admin">Admin (Restaurant Manager)</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary w-100">Create Account</button>
         </div>
       </form>
     </div>
   </div>
 
-  <footer>
-    <div class="footer-content">
-      <div>© 2025 EasyDine. All rights reserved.</div>
-      <div class="footer-icons">
-        <i class="fa-brands fa-facebook-f"></i>
-        <i class="fa-brands fa-twitter"></i>
-        <i class="fa-brands fa-instagram"></i>
-        <i class="fa-brands fa-linkedin-in"></i>
+
+  <!-- ==================== 2. MAIN DASHBOARD WORKSPACE (AUTHENTICATED) ==================== -->
+  <div id="dashboard-workspace-wrapper" class="dashboard-container hidden">
+    
+    <!-- Persistent Left Sidebar Navigation -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-brand">
+        <div class="logo-icon-wrapper">
+          <i class="fa-solid fa-utensils logo-img"></i>
+        </div>
+        <div class="brand-text">
+          <h1>EasyDine</h1>
+          <span class="brand-tag">DINE & AI MANAGER</span>
+        </div>
       </div>
-      <div>
-        <a href="#">Privacy Policy</a> • <a href="#">Terms of Service</a>
+
+      <nav class="sidebar-menu">
+        <div class="menu-label">MAIN NAVIGATION</div>
+        <button class="sidebar-nav-btn active" data-tab="tab-overview">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="sidebar-nav-btn" data-tab="tab-restaurants">
+          <i class="fa-solid fa-utensils"></i>
+          <span>Restaurants</span>
+        </button>
+        <button class="sidebar-nav-btn" data-tab="tab-bookings">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>Bookings</span>
+        </button>
+        <button class="sidebar-nav-btn" data-tab="tab-analytics">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Analytics</span>
+        </button>
+
+        <div class="menu-label" style="margin-top: 1.5rem;">AI INTEGRATION</div>
+        <a href="./pages/chat.html" class="sidebar-nav-btn sidebar-ai-btn">
+          <i class="fa-solid fa-comments"></i>
+          <span>AI Assistant</span>
+          <span class="pulse-dot"></span>
+        </a>
+      </nav>
+
+      <!-- Sidebar User Profile Footer -->
+      <div class="sidebar-footer">
+        <div id="auth-nav-container">
+          <!-- Auth Badge loaded dynamically -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Container -->
+    <main class="dashboard-workspace">
+      
+      <!-- Top Workspace Bar -->
+      <header class="top-bar">
+        <div class="top-bar-title">
+          <h2 id="current-view-title">Overview Dashboard</h2>
+          <span class="top-bar-sub" id="current-view-sub">Real-time restaurant metrics & reservations</span>
+        </div>
+        <div class="top-bar-actions" style="display: flex; gap: 0.75rem; align-items: center;">
+          <div id="top-bar-auth-container">
+            <!-- Rendered dynamically -->
+          </div>
+          <button id="add-restaurant-btn" class="btn-primary admin-only" style="display: none;">
+            <i class="fa-solid fa-plus"></i> Add Restaurant
+          </button>
+        </div>
+      </header>
+
+      <!-- Tab Pane 1: Overview Dashboard -->
+      <section id="tab-overview" class="tab-pane active">
+        <div class="hero-banner">
+          <div class="hero-content">
+            <div class="hero-badge"><i class="fa-solid fa-sparkles"></i> AI Powered Assistant Ready</div>
+            <h2>Welcome to EasyDine Executive Suite</h2>
+            <p>Monitor dining operations, explore culinary venues, check live table bookings, and leverage conversational AI.</p>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon icon-violet"><i class="fa-solid fa-store"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-resto-count">--</span>
+              <span class="stat-label">Restaurants</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-emerald"><i class="fa-solid fa-calendar-check"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-bookings-count">--</span>
+              <span class="stat-label">Active Bookings</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-amber"><i class="fa-solid fa-robot"></i></div>
+            <div class="stat-info">
+              <span class="stat-value">Groq Llama 3.3</span>
+              <span class="stat-label">Multimodal Voice AI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Restaurants Preview Grid -->
+        <div class="overview-section" style="margin-top: 2.5rem;">
+          <div class="section-heading-row">
+            <h3><i class="fa-solid fa-fire text-violet"></i> Featured Restaurants Overview</h3>
+            <button class="btn-secondary btn-sm" onclick="document.querySelector('.sidebar-nav-btn[data-tab=tab-restaurants]').click()">View All <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+          <div id="overview-restaurants" class="restaurants-grid" style="margin-top: 1rem;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Recent Bookings Preview Grid -->
+        <div class="overview-section" style="margin-top: 2.5rem;">
+          <div class="section-heading-row">
+            <h3><i class="fa-solid fa-calendar-days text-emerald"></i> Recent Bookings Preview</h3>
+            <button class="btn-secondary btn-sm" onclick="document.querySelector('.sidebar-nav-btn[data-tab=tab-bookings]').click()">View All <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+          <div id="overview-reservations" class="reservations-grid" style="margin-top: 1rem;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab Pane 2: Restaurants Directory -->
+      <section id="tab-restaurants" class="tab-pane hidden">
+        <div class="filter-bar">
+          <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="restaurant-search-input" placeholder="Search restaurant by name, location, or cuisine..." />
+          </div>
+          <div class="cuisine-filter-group">
+            <button class="filter-pill active" data-cuisine="all">All Cuisines</button>
+            <button class="filter-pill" data-cuisine="Italian">Italian</button>
+            <button class="filter-pill" data-cuisine="Indian">Indian</button>
+            <button class="filter-pill" data-cuisine="Mexican">Mexican</button>
+            <button class="filter-pill" data-cuisine="Chinese">Chinese</button>
+          </div>
+        </div>
+
+        <div id="restaurants" class="restaurants-grid">
+          <!-- Restaurant cards loaded dynamically -->
+        </div>
+      </section>
+
+      <!-- Tab Pane 3: Bookings & Reservations -->
+      <section id="tab-bookings" class="tab-pane hidden">
+        <div class="action-bar" style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div class="section-intro">
+            <h3><i class="fa-solid fa-calendar-days text-emerald"></i> Table Reservations Suite</h3>
+            <p>Interactive table bookings directory, guest management & reservation schedule</p>
+          </div>
+          <button id="open-booking-modal-btn" class="btn-primary">
+            <i class="fa-solid fa-calendar-plus"></i> Book a New Table
+          </button>
+        </div>
+
+        <!-- Interactive Search & Filter Bar for Bookings -->
+        <div class="filter-bar" style="margin-bottom: 1.5rem;">
+          <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="booking-search-input" placeholder="Search booking by guest name, ID, or venue..." />
+          </div>
+          <div class="cuisine-filter-group">
+            <button class="booking-filter-pill active" data-filter="all">All Bookings</button>
+            <button class="booking-filter-pill" data-filter="today">Today's Reservations</button>
+            <button class="booking-filter-pill" data-filter="upcoming">Upcoming</button>
+            <button class="booking-filter-pill" data-filter="large">Large Groups (4+)</button>
+          </div>
+        </div>
+
+        <div id="reservations-list-container" class="reservations-grid">
+          <!-- Reservation cards loaded dynamically -->
+        </div>
+      </section>
+
+      <!-- Tab Pane 4: System Analytics & Insights -->
+      <section id="tab-analytics" class="tab-pane hidden">
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <i class="fa-solid fa-trophy text-amber"></i>
+              <h3>Top Rated Restaurant</h3>
+            </div>
+            <div class="analytics-card-body" id="analytics-top-rated">
+              <p class="placeholder-text">Loading insights...</p>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <i class="fa-solid fa-clock-rotate-left text-violet"></i>
+              <h3>Recently Added Venue</h3>
+            </div>
+            <div class="analytics-card-body" id="analytics-recent-resto">
+              <p class="placeholder-text">Loading insights...</p>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <i class="fa-solid fa-fire text-emerald"></i>
+              <h3>Category Highlight</h3>
+            </div>
+            <div class="analytics-card-body" id="analytics-category">
+              <p class="placeholder-text">Loading insights...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Add Restaurant Modal Dialog (Admin Only) -->
+  <div id="restaurant-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-utensils"></i> Add New Restaurant</h3>
+        <button type="button" class="close-modal-icon" id="close-modal-icon">&times;</button>
+      </div>
+      <form id="restaurant-form">
+        <div class="form-group">
+          <label for="resto-name">Restaurant Name</label>
+          <input type="text" id="resto-name" required placeholder="e.g. Italian Bistro" />
+        </div>
+
+        <div class="form-group">
+          <label for="resto-location">Location</label>
+          <input type="text" id="resto-location" required placeholder="City, State or Address" />
+        </div>
+
+        <div class="form-group">
+          <label for="resto-cuisine">Cuisine Type</label>
+          <input type="text" id="resto-cuisine" required placeholder="e.g. Italian, Continental, Indian" />
+        </div>
+
+        <div class="form-group">
+          <label for="resto-rating">Rating (0 - 5)</label>
+          <input type="number" step="0.1" min="0" max="5" id="resto-rating" placeholder="4.5" />
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary">Save Restaurant</button>
+          <button type="button" id="cancel-modal-btn" class="btn-secondary cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Restaurant Menu Items Modal -->
+  <div id="menu-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content menu-modal-content">
+      <div class="modal-header">
+        <div>
+          <h3 id="menu-modal-title"><i class="fa-solid fa-utensils text-violet"></i> Restaurant Menu</h3>
+          <p id="menu-modal-subtitle" class="subtext">Available dishes & pricing</p>
+        </div>
+        <button type="button" class="close-modal-icon" id="close-menu-modal">&times;</button>
+      </div>
+      
+      <div id="menu-items-list" class="menu-dishes-grid">
+        <!-- Dish items populated dynamically -->
+      </div>
+
+      <div class="modal-actions" style="margin-top: 1.5rem;">
+        <a href="./pages/chat.html" class="btn-primary"><i class="fa-solid fa-comments"></i> Order with AI Assistant</a>
+        <button type="button" id="close-menu-btn" class="btn-secondary">Close</button>
       </div>
     </div>
-  </footer>
+  </div>
 
- <script type="module" src="./scripts/main.js"></script>
+  <!-- New Table Booking Modal -->
+  <div id="booking-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-calendar-plus text-emerald"></i> Book a Table Reservation</h3>
+        <button type="button" class="close-modal-icon" id="close-booking-modal">&times;</button>
+      </div>
+      <form id="booking-form">
+        <div class="form-group">
+          <label for="booking-resto-select">Select Restaurant</label>
+          <select id="booking-resto-select" class="form-select" required>
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="booking-time">Reservation Date & Time</label>
+          <input type="datetime-local" id="booking-time" required />
+        </div>
+
+        <div class="form-group">
+          <label for="booking-guests">Number of Guests</label>
+          <input type="number" id="booking-guests" min="1" max="20" value="2" required />
+        </div>
+
+        <div class="form-group">
+          <label for="booking-user-id">Guest Name / User ID</label>
+          <input type="text" id="booking-user-id" placeholder="e.g. John Doe" required />
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary">Confirm Reservation</button>
+          <button type="button" id="cancel-booking-btn" class="btn-secondary">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./scripts/auth.js"></script>
+  <script type="module" src="./scripts/main.js"></script>
 </body>
 </html>

@@ -161,6 +161,16 @@ async def get_reservations_today_tool() -> dict:
         return {"count": count, "reservations": reservations}
     except Exception as e:
         return {"error": f"Failed to get reservations for today: {str(e)}"}
+
+async def get_all_reservations_tool() -> dict:
+    """Retrieve all reservations and previous table bookings made across restaurants."""
+    try:
+        reservations = await service.get_all_reservations()
+        count = len(reservations)
+        if not reservations: return {"message": "No reservations or previous bookings found.", "count": 0}
+        return {"count": count, "reservations": reservations}
+    except Exception as e:
+        return {"error": f"Failed to list all reservations: {str(e)}"}
         
 async def get_highest_average_rating_restaurant() -> dict:
     """Identify the restaurant with the highest average rating based on user reviews."""

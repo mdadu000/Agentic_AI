@@ -77,6 +77,12 @@ async def delete_reservation(reservation_id: str):
     """Delete a reservation"""
     return await service.delete_reservation(reservation_id)
 
+# Get all reservations across all restaurants (All Bookings)
+@router.get("/reservations/all", status_code=status.HTTP_200_OK)
+async def get_all_reservations():
+    """Retrieve all reservations and previous bookings across all restaurants"""
+    return await service.get_all_reservations()
+
 # Get all reservations for a restaurant
 @router.get("/{restaurant_id}/reservations", response_model=List[Reservation])
 async def get_reservations(restaurant_id: str):

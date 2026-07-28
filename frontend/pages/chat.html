@@ -3,49 +3,84 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Chat — EasyDine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Chat — EasyDine Assistant</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="../styles/main.css" />
   <link rel="stylesheet" href="../styles/chat.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 
-<body>
-  <header>
+<body class="chat-body">
+  <!-- Clean Header Navigation Bar -->
+  <header class="chat-header">
     <div class="header-container">
       <a href="../index.html" class="logo">
-        <i class="fa-solid logo-img fa-utensils"></i>
+        <div class="logo-icon-wrapper">
+          <i class="fa-solid fa-utensils logo-img"></i>
+        </div>
         <h1>EasyDine</h1>
       </a>
       <nav>
         <ul class="nav-links">
-          <li><a href="../index.html">Home</a></li>
-          <li><a href="#">Chat</a></li>
+          <li><a href="../index.html"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a></li>
+          <li><a href="#" class="active"><i class="fa-solid fa-comments"></i> AI Assistant</a></li>
         </ul>
       </nav>
+      <div id="auth-nav-container">
+        <!-- Auth Profile Badge populated dynamically -->
+      </div>
     </div>
   </header>
 
   <main class="chat-page">
     <aside class="sessions-container">
-      <h3 class="session-title">Sessions</h3>
-      <button class="create-session-button" id="new-session">
-        <i class="fa fa-plus"></i> New Session
-      </button>
+      <div class="sessions-header">
+        <h3 class="session-title"><i class="fa-solid fa-clock-rotate-left"></i> Conversations</h3>
+        <button class="create-session-button" id="new-session">
+          <i class="fa fa-plus"></i> New Session
+        </button>
+      </div>
       <ul id="sessions-list" class="sessions-list"></ul>
     </aside>
+
     <section class="chat-container" aria-label="Chat">
+      <div class="chat-header-bar">
+        <div class="agent-status-badge">
+          <span class="status-dot"></span>
+          <span class="agent-title">EasyDine Multimodal AI (Groq Llama 3.3 70B)</span>
+        </div>
+        <div class="voice-status-indicator hidden" id="voice-status">
+          <span class="pulse-mic-icon"><i class="fa-solid fa-microphone"></i></span>
+          <span class="listening-text">Listening... Speak now</span>
+        </div>
+      </div>
+
       <div id="messages" class="messages" role="log" aria-live="polite"></div>
 
       <form id="chat-form" class="chat-form" autocomplete="off">
         <div id="file-preview" class="file-preview"></div>
         <div class="input-group">
-          <label for="file-input" class="attach-btn">
+          <!-- File / Image Upload -->
+          <label for="file-input" class="attach-btn" title="Upload Image or Document">
             <i class="fa fa-paperclip"></i>
           </label>
-          <input id="file-input" type="file" name="file" aria-label="Attach file" hidden />
-          <textarea id="message-input" placeholder="Type your message or upload an image..." rows="1"></textarea>
-          <button id="send-btn" type="submit">
+          <input id="file-input" type="file" name="file" accept="image/*,.pdf,.txt,.json,.csv" aria-label="Attach file" hidden />
+
+          <!-- Speech-to-Text Voice Microphone -->
+          <button type="button" id="mic-btn" class="mic-btn" title="Speak to AI (Voice Input)">
+            <i class="fa-solid fa-microphone"></i>
+          </button>
+
+          <textarea id="message-input" placeholder="Type your query, upload an image/doc, or click the mic to speak..." rows="1"></textarea>
+
+          <!-- Send Message -->
+          <button id="send-btn" type="submit" aria-label="Send message">
             <i class="fa fa-paper-plane"></i>
           </button>
         </div>
@@ -53,6 +88,62 @@
     </section>
   </main>
 
+  <!-- Login Auth Modal -->
+  <div id="auth-modal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content auth-modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-circle"></i> EasyDine Authentication</h3>
+        <button type="button" class="close-modal-icon" id="close-auth-modal">&times;</button>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" id="tab-login" class="auth-tab active">Log In</button>
+        <button type="button" id="tab-signup" class="auth-tab">Register</button>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" required placeholder="user@easydine.com or admin@easydine.com" />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required placeholder="Enter password (e.g. user123 / admin123)" />
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary w-100">Log In</button>
+        </div>
+      </form>
+
+      <form id="signup-form" class="hidden">
+        <div class="form-group">
+          <label for="signup-name">Full Name</label>
+          <input type="text" id="signup-name" required placeholder="John Doe" />
+        </div>
+        <div class="form-group">
+          <label for="signup-email">Email Address</label>
+          <input type="email" id="signup-email" required placeholder="your.email@domain.com" />
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" required placeholder="Choose a password" />
+        </div>
+        <div class="form-group">
+          <label for="signup-role">Account Role</label>
+          <select id="signup-role" class="form-select">
+            <option value="user">User (Customer & Diner)</option>
+            <option value="admin">Admin (Manager)</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary w-100">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="../scripts/auth.js"></script>
   <script type="module" src="../scripts/chat.js"></script>
   <script type="module" src="../services/apiService.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

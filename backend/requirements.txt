@@ -1,12 +1,8 @@
 fastapi
 uvicorn[standard]
 python-dotenv
-azure-search-documents
-openai
+groq
 aiohttp
 requests
-google-adk
-python-dotenv
 python-multipart
-google-api-python-client 
 aiosqlite

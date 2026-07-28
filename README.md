@@ -1,55 +1,58 @@
-# Easy Dine Agent
+# EasyDine AI
 
 ## 📘 Project Overview
-An AgenicAI based online web app for discovering restaurants, checkout menu, avail discounts and reserve table. This project aims to simplify the online booking & reservation experience of restaurants for users. With easyDineAgent, users can converse naturally with AI Agent to checkout the ratings & reviews of restaurants in the locality, explore different cuisines, promotional offers and make reservations. Restaurants can capture feedback and ratings from users to deliver the best dining experience. Users can also order food online for delivery.
+**EasyDine** is a conversational AI-driven web application for discovering restaurants, viewing menus, exploring discounts, and booking table reservations. Powered directly by the **Groq API** using `llama-3.3-70b-versatile`, EasyDine communicates seamlessly with LLM completions and tool execution without any heavy agent frameworks or Google dependencies.
 
-Follow the steps below to set up and run the backend application.
+---
+
+## 🛠️ Architecture & Tech Stack
+
+- **Frontend**: HTML5, CSS3 (Modern Glassmorphic Design System, Plus Jakarta Sans & Outfit Fonts), Vanilla JavaScript.
+- **Backend**: FastAPI (Python), `groq` official SDK, SQLite (`restaurant.db`).
+- **AI Integration**: Direct Groq API completions (`llama-3.3-70b-versatile`) with native function tool schemas.
+
+---
 
 ## 🚀 Steps to Start the Backend App
 
 1. **Navigate to the backend directory**  
    ```bash
-   cd /workspace/easy_dine_agent/backend
+   cd backend
    ```
 
 2. **Install the required dependencies**  
-   Before running the application, install all necessary Python packages using:  
+   Install all necessary Python packages:  
    ```bash
    pip install -r requirements.txt
+   ```
 
-3. **Create Google AI Studio Key**
-   Visit https://aistudio.google.com/ using your personal gmail id and create an API Key. If you are a first time user you might have to create a new project in https://console.cloud.google.com/ first , import it here and then create API Key.
+3. **Get your Groq API Key**
+   - Visit [Groq Console](https://console.groq.com/) and create a free account.
+   - Go to API Keys and click **Create API Key**.
+   - Copy your generated key string (`gsk_...`).
 
-4. **Update env with Google AI Studio Key**
-   Once the key is created copy the key value and update the below variable in .env file
-   GOOGLE_API_KEY="Use your key"
+4. **Configure Environment Variables**
+   - Create or edit the `.env` file in the `backend/` directory:
+   ```env
+   GROQ_API_KEY=gsk_your_groq_api_key_here
+   GROQ_MODEL=llama-3.3-70b-versatile
    ```
 
 5. **Run the backend server**  
-   Once the dependencies are installed, start the application with:  
+   Start the FastAPI backend with:  
    ```bash
-   python3 main.py
+   python main.py
    ```
+   The backend server will run at `http://127.0.0.1:8080`.
 
-## 🚀 Steps to Start the Frontend App
+---
 
-1. Find the `index.html` file inside the **frontend** directory.
+## 🌐 Steps to Start the Frontend App
 
-2. **Configure the backend connection**  
-   - Ensure that the **backend server** is up and running.  
-   - Open the `apiService.js` file (usually located inside the `js` or `services` folder).  
-   - Get the host URL or API base URL from the Endpoints (Plug Icon) in the leftside panel and look for 8080 Port.
-     Example:  
-     ```js
-     const API_CONFIG = {
-         baseURL: "Replace with url from your workspace", // Configure the relavant backend url
-         headers: {
-            "Content-Type": "application/json",
-         },
-     };
-     ```
+1. **Configure Backend URL (Optional)**  
+   - Open `frontend/services/apiService.js`.  
+   - Verify `baseURL` points to `http://127.0.0.1:8080`.
 
-3. **Start the frontend app**  
-   - Right-click on `index.html`.  
-   - Choose **"Open with Live Server"** (available in VS Code or similar editors).  
-   - The application will automatically open in your default web browser.
+2. **Open Frontend in Web Browser**  
+   - Open `frontend/index.html` directly in your browser or run with Live Server.
+   - Navigate to the **AI Assistant** page (`frontend/pages/chat.html`) to interact with the Groq AI model.

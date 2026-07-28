@@ -37,6 +37,73 @@ class Repo:
             await db.execute(f"CREATE TABLE IF NOT EXISTS {REVIEW_TABLE} (id TEXT PRIMARY KEY, restaurant_id TEXT NOT NULL, user_id TEXT NOT NULL, rating REAL NOT NULL, comment TEXT, timestamp TEXT NOT NULL, FOREIGN KEY (restaurant_id) REFERENCES {RESTAURANT_TABLE}(id))")
 
             await db.commit()
+            await self._seed_sample_dishes_if_needed(db)
+            await db.commit()
+
+    async def _seed_sample_dishes_if_needed(self, db):
+        import uuid
+        cursor = await db.execute(f"SELECT id, cuisine_type FROM {RESTAURANT_TABLE}")
+        restaurants = await cursor.fetchall()
+        
+        sample_menus = {
+            "indo-chinese": [
+                ("Idli Manchurian", "Crispy fried rice cakes tossed in tangy Manchurian sauce & spring onions", 8.99, "Indo-Chinese"),
+                ("Dosa 65", "Crispy crepe roll stuffed with spicy Andhra style cottage cheese & curry leaves", 9.99, "Indo-Chinese"),
+                ("Hakka Vegetable Noodles", "Stir-fried wheat noodles with wok-tossed bell peppers & soy garlic", 11.50, "Noodles"),
+                ("Schezwan Fried Rice", "Wok-tossed basmati rice with fiery Schezwan chili garlic paste", 10.99, "Main Course")
+            ],
+            "south-indian": [
+                ("Masala Dosa", "Golden crispy rice crepe filled with spiced potato masala served with sambar", 8.50, "South Indian"),
+                ("Steamed Rice Idli (3pcs)", "Fluffy steamed rice cakes served with coconut chutney & lentil sambar", 6.50, "South Indian"),
+                ("Medu Vada (2pcs)", "Crispy fried lentil donuts seasoned with peppercorns & mint chutney", 6.99, "Starters"),
+                ("Filter Coffee", "Traditional South Indian chicory decoction coffee brewed with hot milk", 3.50, "Beverages")
+            ],
+            "italian": [
+                ("Margherita Basil Pizza", "Fresh mozzarella, vine tomatoes, organic basil & extra virgin olive oil", 14.99, "Main Course"),
+                ("Truffle Cream Fettuccine", "Handmade fettuccine pasta in rich black truffle parmesan cream sauce", 18.50, "Main Course"),
+                ("Classic Tiramisu", "Espresso-soaked ladyfingers with creamy mascarpone & cocoa powder", 8.99, "Dessert"),
+                ("Crispy Garlic Bruschetta", "Toasted sourdough topped with diced heirloom tomatoes & fresh oregano", 7.50, "Starters")
+            ],
+            "indian": [
+                ("Butter Chicken Masala", "Tender chicken cooked in rich creamy tomato butter sauce with authentic spices", 16.99, "Main Course"),
+                ("Paneer Tikka Grill", "Marinated cottage cheese cubes grilled with bell peppers & mint chutney", 14.50, "Starters"),
+                ("Garlic Butter Naan", "Freshly baked tandoori naan brushed with garlic butter & coriander", 4.25, "Breads"),
+                ("Gulab Jamun with Ice Cream", "Warm milk dumplings served with vanilla bean ice cream", 6.99, "Dessert")
+            ],
+            "mexican": [
+                ("Carne Asada Tacos (3pcs)", "Flame-grilled steak topped with cilantro, diced onions & salsa verde", 13.99, "Main Course"),
+                ("Cheesy Nachos Supreme", "Tortilla chips layered with melted jack cheese, guacamole & jalapeños", 11.50, "Starters"),
+                ("Chipotle Chicken Burrito", "Stuffed with seasoned rice, black beans, pico de gallo & grilled chicken", 14.25, "Main Course"),
+                ("Churros with Chocolate Dip", "Cinnamon sugar crispy churros served with warm Mexican hot chocolate", 7.99, "Dessert")
+            ],
+            "default": [
+                ("Classic Wagyu Burger", "Premium wagyu beef patty, cheddar, caramelized onions & secret sauce with fries", 17.50, "Main Course"),
+                ("Crispy Caesar Salad", "Romaine hearts, parmesan crisp, garlic croutons & creamy Caesar dressing", 12.00, "Starters"),
+                ("Molten Chocolate Lava Cake", "Warm chocolate cake with gooey molten center & fresh berries", 8.50, "Dessert"),
+                ("Craft Lemonade Soda", "Freshly squeezed lemon juice with mint & sparkling water", 4.50, "Beverages")
+            ]
+        }
+
+        for r_id, c_type in restaurants:
+            c = await db.execute(f"SELECT COUNT(*) FROM {MENU_ITEM_TABLE} WHERE restaurant_id=?", (r_id,))
+            count = (await c.fetchone())[0]
+            if count == 0:
+                c_key = "default"
+                if c_type:
+                    ct_lower = c_type.lower()
+                    if "chinese" in ct_lower or "indo" in ct_lower: c_key = "indo-chinese"
+                    elif "south" in ct_lower: c_key = "south-indian"
+                    elif "italian" in ct_lower: c_key = "italian"
+                    elif "indian" in ct_lower: c_key = "indian"
+                    elif "mexican" in ct_lower: c_key = "mexican"
+
+                dishes = sample_menus[c_key]
+                for name, desc, price, cat in dishes:
+                    item_id = str(uuid.uuid4())
+                    await db.execute(
+                        f"INSERT INTO {MENU_ITEM_TABLE} (id, restaurant_id, name, description, price, category) VALUES (?, ?, ?, ?, ?, ?)",
+                        (item_id, r_id, name, desc, price, cat)
+                    )
 
     # --- INSERTS ---
     async def insert_restaurant(self, restaurant: Restaurant):
@@ -125,6 +192,35 @@ class Repo:
             cursor = await db.execute(f"SELECT id, restaurant_id, user_id, reservation_time, guests FROM {RESERVATION_TABLE} WHERE reservation_time BETWEEN ? AND ?", (start_of_day, end_of_day))
             rows = await cursor.fetchall()
             return [Reservation(id=row[0], restaurant_id=row[1], user_id=row[2], reservation_time=datetime.fromisoformat(row[3]), guests=row[4]) for row in rows]
+
+    async def list_all_reservations(self) -> List[Dict]:
+        """Lists all reservations and previous bookings joined with restaurant names."""
+        async with aiosqlite.connect(self.db_path) as db:
+            query = f"""
+                SELECT T1.id, T1.restaurant_id, T2.name AS restaurant_name, T1.user_id, T1.reservation_time, T1.guests
+                FROM {RESERVATION_TABLE} AS T1
+                LEFT JOIN {RESTAURANT_TABLE} AS T2 ON T1.restaurant_id = T2.id
+                ORDER BY T1.reservation_time DESC
+            """
+            cursor = await db.execute(query)
+            rows = await cursor.fetchall()
+            return [
+                {
+                    "id": row[0],
+                    "restaurant_id": row[1],
+                    "restaurant_name": row[2] or "Restaurant",
+                    "user_id": row[3],
+                    "reservation_time": row[4],
+                    "guests": row[5]
+                }
+                for row in rows
+            ]
+
+    async def remove_reservation(self, reservation_id: str) -> bool:
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(f"DELETE FROM {RESERVATION_TABLE} WHERE id = ?", (reservation_id,))
+            await db.commit()
+            return cursor.rowcount > 0
 
     async def get_avg_ratings_by_restaurant(self) -> List[Dict]:
         async with aiosqlite.connect(self.db_path) as db:
